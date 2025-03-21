@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+// this is the comment to switch the brach in git.
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
