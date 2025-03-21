@@ -18,39 +18,53 @@
 
     <meta charset="UTF-8" />
     <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
-    <meta name="description" content="A new Flutter project." />
+    <meta name="description" content="Athi Pro - Athlete Management System" />
 
     <!-- iOS meta tags & icons -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="apple-mobile-web-app-title" content="athi_pro" />
+    <meta name="apple-mobile-web-app-title" content="Athi Pro" />
     <link rel="apple-touch-icon" href="icons/Icon-192.png" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png" />
 
-    <title>athi_pro</title>
+    <title>Athi Pro</title>
     <link rel="manifest" href="manifest.json" />
 
-    <script>
-      // The value below is injected by flutter build, do not touch.
-      const serviceWorkerVersion = null
-    </script>
-    <!-- This script adds the flutter initialization JS code -->
-    <script src="flutter.js" defer></script>
-
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"></script>
-    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+
+    <script>
+      var serviceWorkerVersion = null
+    </script>
+
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: 'AIzaSyAHqcsMi2rRuXZP7kySIIDd7sSO0qXqh8s',
+        authDomain: 'athlete-s.firebaseapp.com',
+        projectId: 'athlete-s',
+        storageBucket: 'athlete-s.firebasestorage.app',
+        messagingSenderId: '577155010875',
+        appId: '1:577155010875:web:76756242e6f875e3ce271e',
+        measurementId: 'G-6M9G0PMFYH',
+      }
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig)
+    </script>
+
+    <!-- Flutter initialization -->
+    <script src="flutter.js" defer></script>
   </head>
   <body>
     <script>
       window.addEventListener('load', function (ev) {
-        // Download main.dart.js
         _flutter.loader.loadEntrypoint({
           serviceWorker: {
             serviceWorkerVersion: serviceWorkerVersion,
@@ -63,5 +77,6 @@
         })
       })
     </script>
+    <div id="flutter_app"></div>
   </body>
 </html>
