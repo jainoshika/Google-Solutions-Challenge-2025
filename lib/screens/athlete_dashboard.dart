@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'profile_settings.dart';
 import 'explore_page.dart';
@@ -12,17 +15,39 @@ class AthleteDashboard extends StatefulWidget {
   State<AthleteDashboard> createState() => _AthleteDashboardState();
 }
 
-class _AthleteDashboardState extends State<AthleteDashboard> {
-  String? profileImageUrl;
+class _AthleteDashboardState extends State<AthleteDashboard>
+    with SingleTickerProviderStateMixin {
+  String? profileImagePath;
   String athleteName = '';
   String bio = '';
   String city = '';
   Map<String, dynamic>? additionalDetails;
+  late AnimationController _controller;
+  late List<Animation<double>> _animations;
 
   @override
   void initState() {
     super.initState();
     _loadAthleteData();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _animations = List.generate(4, (index) {
+      return Tween<double>(begin: 1.0, end: 1.2).animate(
+        CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeInOut,
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAthleteData() async {
@@ -38,9 +63,53 @@ class _AthleteDashboardState extends State<AthleteDashboard> {
           athleteName = doc.data()?['name'] ?? '';
           bio = doc.data()?['bio'] ?? '';
           city = doc.data()?['city'] ?? '';
-          profileImageUrl = doc.data()?['profileImageUrl'];
           additionalDetails = doc.data()?['additionalDetails'];
         });
+      }
+
+      // Load local profile image
+      final directory = await getApplicationDocumentsDirectory();
+      final imageFile = File('${directory.path}/profile_image.jpg');
+      if (imageFile.existsSync()) {
+        setState(() {
+          profileImagePath = imageFile.path;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+
+    if (image != null) {
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final imageFile = File('${directory.path}/profile_image.jpg');
+
+        // Delete existing image if it exists
+        if (imageFile.existsSync()) {
+          await imageFile.delete();
+        }
+
+        // Save new image
+        await File(image.path).copy(imageFile.path);
+
+        setState(() {
+          profileImagePath = imageFile.path;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving image: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -56,22 +125,30 @@ class _AthleteDashboardState extends State<AthleteDashboard> {
               child: Column(
                 children: [
                   // Profile Picture
-                  Container(
-                    width: 150,
-                    height: 150,
-                    margin: const EdgeInsets.only(top: 20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.orange, width: 3),
-                      image: profileImageUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(profileImageUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : const DecorationImage(
-                              image: AssetImage('assets/default_profile.png'),
-                              fit: BoxFit.cover,
-                            ),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      margin: const EdgeInsets.only(top: 20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.orange, width: 3),
+                        image: profileImagePath != null
+                            ? DecorationImage(
+                                image: FileImage(File(profileImagePath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : const DecorationImage(
+                                image: AssetImage('assets/default_profile.png'),
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: Colors.orange,
+                        size: 40,
+                      ),
                     ),
                   ),
 
@@ -144,43 +221,6 @@ class _AthleteDashboardState extends State<AthleteDashboard> {
                       ),
                     ),
                   ],
-
-                  // Bottom Navigation Icons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildNavIcon(Icons.explore, 'Explore', () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ExplorePage(),
-                            ),
-                          );
-                        }),
-                        _buildNavIcon(Icons.search, 'Search', () {}),
-                        _buildNavIcon(Icons.add_circle, 'Add Media', () {}),
-                        _buildNavIcon(Icons.build, 'Tools', () {
-                          // Navigate to tools.dart
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Tools page coming soon!'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                        }),
-                        _buildNavIcon(Icons.person, 'Profile', () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ProfileSettings(),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -203,22 +243,96 @@ class _AthleteDashboardState extends State<AthleteDashboard> {
           ],
         ),
       ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.orange.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavIcon(Icons.explore, 'Explore', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ExplorePage(),
+                  ),
+                );
+              }, 0),
+              _buildNavIcon(Icons.search, 'Search', () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Search page coming soon!'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }, 1),
+              _buildNavIcon(Icons.add_circle, 'Add Media', () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Add Media page coming soon!'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }, 2),
+              _buildNavIcon(Icons.person, 'Profile', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileSettings(),
+                  ),
+                );
+              }, 3),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 70),
+        child: FloatingActionButton(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tools page coming soon!'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          },
+          backgroundColor: Colors.orange,
+          child: const Icon(Icons.build, color: Colors.white),
+        ),
+      ),
     );
   }
 
-  Widget _buildNavIcon(IconData icon, String label, VoidCallback onTap) {
+  Widget _buildNavIcon(
+      IconData icon, String label, VoidCallback onTap, int index) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.orange, size: 32),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ],
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      child: ScaleTransition(
+        scale: _animations[index],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.orange, size: 32),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
