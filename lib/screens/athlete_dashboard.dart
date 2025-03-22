@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'profile_settings.dart';
 import 'explore_page.dart';
+import 'search_page.dart';
 
 class AthleteDashboard extends StatefulWidget {
   const AthleteDashboard({super.key});
@@ -282,10 +283,10 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                 );
               }, 0),
               _buildNavIcon(Icons.search, 'Search', () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Search page coming soon!'),
-                    backgroundColor: Colors.orange,
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchPage(),
                   ),
                 );
               }, 1),
