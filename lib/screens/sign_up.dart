@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -76,43 +77,133 @@ class _SignUpScreenState extends State<SignUpScreen>
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_selectedSports.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least 2 sports'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     try {
       setState(() => _isLoading = true);
+
+      // Check if Firebase is initialized
+      if (kDebugMode) {
+        print('Checking Firebase initialization...');
+        print('Firebase.app(): ${FirebaseAuth.instance.app.name}');
+        print('Current user: ${FirebaseAuth.instance.currentUser}');
+      }
+
+      // Print debug information
+      if (kDebugMode) {
+        print(
+          'Attempting to create user with email: ${_emailController.text.trim()}',
+        );
+        print(
+          'Firebase configuration loaded: ${FirebaseAuth.instance.app.options.projectId != null}',
+        );
+        print('Project ID: ${FirebaseAuth.instance.app.options.projectId}');
+        print('API Key: ${FirebaseAuth.instance.app.options.apiKey}');
+      }
 
       // Create user with email and password
       final UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-            email: _emailController.text,
+            email: _emailController.text.trim(),
             password: _passwordController.text,
           );
 
+      if (kDebugMode) {
+        print(
+          'User created successfully with UID: ${userCredential.user?.uid}',
+        );
+      }
+
       // Store additional user data in Firestore
+      final userData = {
+        'name': _nameController.text.trim(),
+        'age': int.parse(_ageController.text),
+        'contact': _contactController.text.trim(),
+        'email': _emailController.text.trim(),
+        'sports': _selectedSports,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      };
+
+      if (kDebugMode) {
+        print('Attempting to store user data in Firestore: $userData');
+      }
+
       await FirebaseFirestore.instance
-          .collection('users')
+          .collection('athletes')
           .doc(userCredential.user!.uid)
-          .set({
-            'name': _nameController.text,
-            'age': int.parse(_ageController.text),
-            'contact': _contactController.text,
-            'email': _emailController.text,
-            'sports': _selectedSports,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+          .set(userData);
+
+      if (kDebugMode) {
+        print('User data stored successfully in Firestore');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
+          const SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Firebase Auth Error: ${e.code} - ${e.message}');
+      }
+      if (mounted) {
+        String errorMessage = 'Error creating account: ';
+        switch (e.code) {
+          case 'email-already-in-use':
+            errorMessage += 'This email is already registered.';
+            break;
+          case 'weak-password':
+            errorMessage += 'The password is too weak.';
+            break;
+          case 'invalid-email':
+            errorMessage += 'Invalid email address.';
+            break;
+          case 'operation-not-allowed':
+            errorMessage += 'Email/password accounts are not enabled.';
+            break;
+          default:
+            errorMessage += e.message ?? e.toString();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } on FirebaseException catch (e) {
+      if (kDebugMode) {
+        print('Firebase Error: ${e.code} - ${e.message}');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Firebase Error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected Error: $e');
+      }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error creating account: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unexpected Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) {

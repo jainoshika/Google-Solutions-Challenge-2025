@@ -27,7 +27,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -35,7 +38,8 @@ class DefaultFirebaseOptions {
         );
       default:
         throw UnsupportedError(
-          'DefaultFirebaseOptions are not supported for this platform.',
+          'DefaultFirebaseOptions have not been configured for $defaultTargetPlatform - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
         );
     }
   }
@@ -46,43 +50,37 @@ class DefaultFirebaseOptions {
     messagingSenderId: '577155010875',
     projectId: 'athlete-s',
     authDomain: 'athlete-s.firebaseapp.com',
-    storageBucket: 'athlete-s.firebasestorage.app',
+    storageBucket: 'athlete-s.appspot.com',
     measurementId: 'G-6M9G0PMFYH',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBlOFYCUtFzQOYVBGa2Zs6Dw6fUYtE9GzY',
-    appId: '1:577155010875:android:cbf8c89117d23269ce271e',
+    apiKey: 'AIzaSyAHqcsMi2rRuXZP7kySIIDd7sSO0qXqh8s',
+    appId: '1:577155010875:android:76756242e6f875e3ce271e',
     messagingSenderId: '577155010875',
     projectId: 'athlete-s',
-    storageBucket: 'athlete-s.firebasestorage.app',
+    storageBucket: 'athlete-s.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCVi72367JlmEyGciadqB3kQ0FVoJjYLvI',
-    appId: '1:577155010875:ios:930997da4d0171b9ce271e',
+    apiKey: 'AIzaSyAHqcsMi2rRuXZP7kySIIDd7sSO0qXqh8s',
+    appId: '1:577155010875:ios:76756242e6f875e3ce271e',
     messagingSenderId: '577155010875',
     projectId: 'athlete-s',
-    storageBucket: 'athlete-s.firebasestorage.app',
-    iosBundleId: 'com.example.athlead',
+    storageBucket: 'athlete-s.appspot.com',
+    iosClientId:
+        '577155010875-76756242e6f875e3ce271e.apps.googleusercontent.com',
+    iosBundleId: 'com.example.athlete_s',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCVi72367JlmEyGciadqB3kQ0FVoJjYLvI',
-    appId: '1:577155010875:ios:553aa01a6ec7b646ce271e',
-    messagingSenderId: '577155010875',
-    projectId: 'athlete-s',
-    storageBucket: 'athlete-s.firebasestorage.app',
-    iosBundleId: 'com.example.athiPro',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyAHqcsMi2rRuXZP7kySIIDd7sSO0qXqh8s',
-    appId: '1:577155010875:web:7cddf5c45c2b8e45ce271e',
+    appId: '1:577155010875:macos:76756242e6f875e3ce271e',
     messagingSenderId: '577155010875',
     projectId: 'athlete-s',
-    authDomain: 'athlete-s.firebaseapp.com',
-    storageBucket: 'athlete-s.firebasestorage.app',
-    measurementId: 'G-7KMR5QVN1D',
+    storageBucket: 'athlete-s.appspot.com',
+    iosClientId:
+        '577155010875-76756242e6f875e3ce271e.apps.googleusercontent.com',
+    iosBundleId: 'com.example.athlete_s',
   );
 }
