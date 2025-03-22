@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'sign_up.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,7 +56,10 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       setState(() => _isLoading = true);
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return;
+
+      if (googleUser == null) {
+        throw 'Google sign in was cancelled';
+      }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -67,8 +71,23 @@ class _LoginScreenState extends State<LoginScreen>
       final userCredential = await FirebaseAuth.instance.signInWithCredential(
         credential,
       );
+
+      // Check if this is a new user
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        // Create a new document in Firestore for the Google user
+        await FirebaseFirestore.instance
+            .collection('athletes')
+            .doc(userCredential.user!.uid)
+            .set({
+              'name': userCredential.user!.displayName ?? '',
+              'email': userCredential.user!.email ?? '',
+              'createdAt': FieldValue.serverTimestamp(),
+              'lastUpdated': FieldValue.serverTimestamp(),
+              'signInMethod': 'google',
+            });
+      }
+
       if (mounted) {
-        // Navigate to athlete dashboard
         Navigator.pushReplacementNamed(context, '/athlete_dashboard');
       }
     } catch (e) {
@@ -92,30 +111,41 @@ class _LoginScreenState extends State<LoginScreen>
 
     try {
       setState(() => _isLoading = true);
-      String email = _contactController.text;
+      String email = _contactController.text.trim();
+
       if (!_isValidEmail(email)) {
-        throw 'Invalid email format';
+        throw FirebaseAuthException(
+          code: 'invalid-email',
+          message: 'Invalid email format',
+        );
       }
 
-      final userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: email,
-            password: _passwordController.text,
-          );
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: _passwordController.text,
+      );
 
       if (mounted) {
-        // Navigate to athlete dashboard
         Navigator.pushReplacementNamed(context, '/athlete_dashboard');
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        String errorMessage = 'An error occurred during sign in';
-        if (e.code == 'user-not-found') {
-          errorMessage = 'No user found with this email';
-        } else if (e.code == 'wrong-password') {
-          errorMessage = 'Wrong password provided';
-        } else if (e.code == 'invalid-email') {
-          errorMessage = 'Invalid email address';
+        String errorMessage;
+        switch (e.code) {
+          case 'user-not-found':
+            errorMessage = 'No user found with this email';
+            break;
+          case 'wrong-password':
+            errorMessage = 'Wrong password provided';
+            break;
+          case 'invalid-email':
+            errorMessage = 'Invalid email address';
+            break;
+          case 'user-disabled':
+            errorMessage = 'This account has been disabled';
+            break;
+          default:
+            errorMessage = e.message ?? 'An error occurred during sign in';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
