@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'profile_settings.dart';
 import 'explore_page.dart';
+import 'search_page.dart';
 
 class AthleteDashboard extends StatefulWidget {
   const AthleteDashboard({super.key});
@@ -122,106 +123,120 @@ class _AthleteDashboardState extends State<AthleteDashboard>
         child: Stack(
           children: [
             SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Profile Picture
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      margin: const EdgeInsets.only(top: 20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.orange, width: 3),
-                        image: profileImagePath != null
-                            ? DecorationImage(
-                                image: FileImage(File(profileImagePath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : const DecorationImage(
-                                image: AssetImage('assets/default_profile.png'),
-                                fit: BoxFit.cover,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Profile Picture
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          margin: const EdgeInsets.only(top: 20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.orange, width: 3),
+                            image: profileImagePath != null
+                                ? DecorationImage(
+                                    image: FileImage(File(profileImagePath!)),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/default_profile.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.orange,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+
+                      // Athlete Name
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Text(
+                          athleteName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                      // Bio Section
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          bio,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                      // City
+                      Text(
+                        city,
+                        style: const TextStyle(
+                          color: Colors.cyan,
+                          fontSize: 18,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      // Additional Details Section
+                      if (additionalDetails != null) ...[
+                        const SizedBox(height: 20),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Additional Details',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.orange,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-
-                  // Athlete Name
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Text(
-                      athleteName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  // Bio Section
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      bio,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-
-                  // City
-                  Text(
-                    city,
-                    style: const TextStyle(
-                      color: Colors.cyan,
-                      fontSize: 18,
-                    ),
-                  ),
-
-                  // Additional Details Section
-                  if (additionalDetails != null) ...[
-                    const SizedBox(height: 20),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[900],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Additional Details',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Qualification: ${additionalDetails!['qualification'] ?? 'Not specified'}',
+                                style: const TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                'Languages: ${additionalDetails!['languages'] ?? 'Not specified'}',
+                                style: const TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Qualification: ${additionalDetails!['qualification'] ?? 'Not specified'}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            'Languages: ${additionalDetails!['languages'] ?? 'Not specified'}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
             // Gear Icon in top-right corner
@@ -268,10 +283,10 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                 );
               }, 0),
               _buildNavIcon(Icons.search, 'Search', () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Search page coming soon!'),
-                    backgroundColor: Colors.orange,
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchPage(),
                   ),
                 );
               }, 1),
@@ -296,7 +311,7 @@ class _AthleteDashboardState extends State<AthleteDashboard>
         ),
       ),
       floatingActionButton: Container(
-        margin: const EdgeInsets.only(bottom: 70),
+        margin: const EdgeInsets.only(bottom: 15),
         child: FloatingActionButton(
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
