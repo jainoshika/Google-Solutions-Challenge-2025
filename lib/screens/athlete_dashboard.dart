@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../services/supabase_service.dart';
 import 'profile_settings.dart';
 import 'explore_page.dart';
+import 'tools_page.dart';
 import 'search_page.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../services/web_file_picker.dart'
+    if (dart.library.io) '../services/mobile_file_picker.dart';
 
 class AthleteDashboard extends StatefulWidget {
   const AthleteDashboard({super.key});
@@ -18,13 +21,14 @@ class AthleteDashboard extends StatefulWidget {
 
 class _AthleteDashboardState extends State<AthleteDashboard>
     with SingleTickerProviderStateMixin {
-  String? profileImagePath;
+  String? profileImageUrl;
   String athleteName = '';
   String bio = '';
   String city = '';
   Map<String, dynamic>? additionalDetails;
   late AnimationController _controller;
   late List<Animation<double>> _animations;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -68,50 +72,48 @@ class _AthleteDashboardState extends State<AthleteDashboard>
         });
       }
 
-      // Load local profile image
-      final directory = await getApplicationDocumentsDirectory();
-      final imageFile = File('${directory.path}/profile_image.jpg');
-      if (imageFile.existsSync()) {
+      // Fetch profile image URL from Firebase
+      final imageUrl = await SupabaseService.fetchProfileImage(user.uid);
+      if (imageUrl != null) {
         setState(() {
-          profileImagePath = imageFile.path;
+          profileImageUrl = imageUrl;
         });
       }
     }
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 85,
-    );
+    setState(() => isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No user logged in');
+      }
 
-    if (image != null) {
-      try {
-        final directory = await getApplicationDocumentsDirectory();
-        final imageFile = File('${directory.path}/profile_image.jpg');
+      // Use the new pickAndUploadImage method
+      final imageUrl = await SupabaseService.pickAndUploadImage(
+        athleteId: user.uid,
+        context: context,
+        source: ImageSource.gallery,
+      );
 
-        // Delete existing image if it exists
-        if (imageFile.existsSync()) {
-          await imageFile.delete();
-        }
-
-        // Save new image
-        await File(image.path).copy(imageFile.path);
-
+      if (imageUrl != null) {
         setState(() {
-          profileImagePath = imageFile.path;
+          profileImageUrl = imageUrl;
         });
-      } catch (e) {
+      }
+    } catch (e) {
+      print('Error updating profile picture: $e');
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving image: ${e.toString()}'),
+            content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -135,36 +137,57 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                       // Profile Picture
                       GestureDetector(
                         onTap: _pickImage,
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          margin: const EdgeInsets.only(top: 20),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.orange, width: 3),
-                            image: profileImagePath != null
-                                ? DecorationImage(
-                                    image: FileImage(File(profileImagePath!)),
-                                    fit: BoxFit.cover,
-                                  )
-                                : const DecorationImage(
-                                    image: AssetImage(
-                                        'assets/default_profile.png'),
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.orange,
-                            size: 40,
-                          ),
-                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 150,
+                              height: 150,
+                              margin: const EdgeInsets.only(top: 20),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.orange, width: 3),
+                              ),
+                              child: ClipOval(
+                                child: profileImageUrl != null
+                                    ? CachedNetworkImage(
+                                        imageUrl: profileImageUrl!,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            const CircularProgressIndicator(
+                                          color: Colors.orange,
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Image.asset(
+                                          'assets/default_profile.png',
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : Image.asset(
+                                        'assets/default_profile.png',
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                            if (isLoading)
+                              const CircularProgressIndicator(
+                                color: Colors.orange,
+                              ),
+                            if (!isLoading)
+                              const Icon(
+                                Icons.camera_alt,
+                                color: Colors.orange,
+                                size: 40,
+          ),
+        ],
+      ),
                       ),
 
                       // Athlete Name
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
-                        child: Text(
+              child: Text(
                           athleteName,
                           style: const TextStyle(
                             color: Colors.white,
@@ -178,7 +201,7 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                       // Bio Section
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(
+              child: Text(
                           bio,
                           style: const TextStyle(
                             color: Colors.white70,
@@ -208,15 +231,15 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                             color: Colors.grey[900],
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Column(
+            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
+              children: [
                               const Text(
                                 'Additional Details',
                                 style: TextStyle(
-                                  color: Colors.orange,
+                    color: Colors.orange,
                                   fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -299,10 +322,11 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                 );
               }, 2),
               _buildNavIcon(Icons.person, 'Profile', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileSettings(),
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You are already on your profile'),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 1),
                   ),
                 );
               }, 3),
@@ -314,13 +338,13 @@ class _AthleteDashboardState extends State<AthleteDashboard>
         margin: const EdgeInsets.only(bottom: 15),
         child: FloatingActionButton(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tools page coming soon!'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-          },
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ToolsPage(),
+            ),
+          );
+        },
           backgroundColor: Colors.orange,
           child: const Icon(Icons.build, color: Colors.white),
         ),

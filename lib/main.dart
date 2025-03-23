@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,19 +15,25 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize Firebase Core
-    if (kIsWeb) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+    // Initialize Supabase with correct credentials
+    await Supabase.initialize(
+      url: 'https://rrzolnmjsjvqinujgmii.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyem9sbm1qc2p2cWludWpnbWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NzUxODQsImV4cCI6MjA1ODI1MTE4NH0.FR2IRhOUXwabRwvBlCblIYIWZ-LI6tBl4rTE7u8kQr8',
+      debug: true, // Enable debug mode for detailed logging
+    );
 
-      // Initialize Firestore settings for web
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Initialize Firestore settings for web
+    if (kIsWeb) {
       await FirebaseFirestore.instance.enablePersistence();
       FirebaseFirestore.instance.settings = const Settings(
         cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
         persistenceEnabled: true,
-      );
-    } else {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
       );
     }
 
@@ -45,11 +52,11 @@ void main() async {
 
     // Test Firebase Auth
     try {
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: 'test@gmail.com',
-            password: 'password123',
-          );
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: 'test@gmail.com',
+        password: 'password123',
+      );
       print('User created successfully: ${userCredential.user?.email}');
     } catch (e) {
       print('Firebase Auth Error: $e - Error');
@@ -62,6 +69,9 @@ void main() async {
 
   runApp(const MyApp());
 }
+
+// Create a Supabase client that can be used globally
+final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
