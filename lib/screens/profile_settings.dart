@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../services/cloudinary_service.dart';
+import '../config/cloudinary_config.dart';
 import 'login_screen.dart';
+import 'dart:typed_data';
 
 class ProfileSettings extends StatefulWidget {
   const ProfileSettings({super.key});
@@ -26,6 +29,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
   String? profileImageUrl;
   bool isLoading = false;
+  String? _cloudinaryError;
 
   @override
   void initState() {
@@ -72,41 +76,69 @@ class _ProfileSettingsState extends State<ProfileSettings> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 85,
-    );
+    if (!CloudinaryConfig.isValid()) {
+      setState(() {
+        _cloudinaryError =
+            'Invalid Cloudinary configuration: ${CloudinaryConfig.getDebugInfo()}';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_cloudinaryError!),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    if (image != null) {
-      setState(() => isLoading = true);
-      try {
+    setState(() => isLoading = true);
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('athlete-profile-pictures/${user.uid}');
+          dynamic fileToUpload;
 
-          await storageRef.putFile(File(image.path));
-          final downloadUrl = await storageRef.getDownloadURL();
+          if (kIsWeb) {
+            // For web, read the file as bytes
+            fileToUpload = await image.readAsBytes();
+          } else {
+            // For mobile, use the file path
+            fileToUpload = File(image.path);
+          }
+
+          final imageUrl =
+              await CloudinaryService.instance.uploadImage(fileToUpload);
 
           await FirebaseFirestore.instance
               .collection('athletes')
               .doc(user.uid)
-              .update({'profileImageUrl': downloadUrl});
+              .update({'profileImageUrl': imageUrl});
 
-          setState(() => profileImageUrl = downloadUrl);
+          setState(() => profileImageUrl = imageUrl);
         }
-      } catch (e) {
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _cloudinaryError = e.toString();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error uploading image: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
-      } finally {
+      }
+      debugPrint('Error in _pickImage: $e');
+    } finally {
+      if (mounted) {
         setState(() => isLoading = false);
       }
     }

@@ -21,10 +21,17 @@
     <meta name="description" content="A new Flutter project." />
 
     <!-- iOS meta tags & icons -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="athlete_s" />
     <link rel="apple-touch-icon" href="icons/Icon-192.png" />
+
+    <!-- Google Sign In meta tag -->
+    <meta
+      name="google-signin-client_id"
+      content="577155010875-76756242e6f875e3ce271e.apps.googleusercontent.com"
+    />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -44,38 +51,29 @@
       var serviceWorkerVersion = null
     </script>
 
-    <script>
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: 'AIzaSyAHqcsMi2rRuXZP7kySIIDd7sSO0qXqh8s',
-        authDomain: 'athlete-s.firebaseapp.com',
-        projectId: 'athlete-s',
-        storageBucket: 'athlete-s.appspot.com',
-        messagingSenderId: '577155010875',
-        appId: '1:577155010875:web:76756242e6f875e3ce271e',
-        measurementId: 'G-6M9G0PMFYH',
-      }
-
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig)
-
-      // Log Firebase initialization
-      console.log('Firebase initialized with config:', firebaseConfig)
-    </script>
-
     <!-- Flutter initialization -->
     <script src="flutter.js" defer></script>
   </head>
   <body>
     <script>
       window.addEventListener('load', function (ev) {
-        // Initialize Firebase first
+        var loading = document.createElement('div')
+        loading.style.position = 'fixed'
+        loading.style.top = '50%'
+        loading.style.left = '50%'
+        loading.style.transform = 'translate(-50%, -50%)'
+        loading.style.fontSize = '24px'
+        loading.textContent = 'Loading...'
+        document.body.appendChild(loading)
+
+        // Download main.dart.js
         _flutter.loader.loadEntrypoint({
           serviceWorker: {
             serviceWorkerVersion: serviceWorkerVersion,
           },
           onEntrypointLoaded: function (engineInitializer) {
             engineInitializer.initializeEngine().then(function (appRunner) {
+              loading.remove()
               appRunner.runApp()
             })
           },
