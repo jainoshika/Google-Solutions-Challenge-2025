@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../services/supabase_service.dart';
+import 'dart:io';
+import '../services/cloudinary_service.dart';
+import '../config/cloudinary_config.dart';
 import 'profile_settings.dart';
 import 'explore_page.dart';
 import 'tools_page.dart';
@@ -29,10 +32,13 @@ class _AthleteDashboardState extends State<AthleteDashboard>
   late AnimationController _controller;
   late List<Animation<double>> _animations;
   bool isLoading = false;
+  late CloudinaryService _cloudinaryService;
+  String? _cloudinaryError;
 
   @override
   void initState() {
     super.initState();
+    _initializeCloudinary();
     _loadAthleteData();
     _controller = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -47,6 +53,20 @@ class _AthleteDashboardState extends State<AthleteDashboard>
         ),
       );
     });
+  }
+
+  void _initializeCloudinary() {
+    try {
+      _cloudinaryService = CloudinaryService.instance;
+      setState(() {
+        _cloudinaryError = null;
+      });
+    } catch (e) {
+      setState(() {
+        _cloudinaryError = e.toString();
+      });
+      debugPrint('Error initializing Cloudinary: $e');
+    }
   }
 
   @override
@@ -73,7 +93,7 @@ class _AthleteDashboardState extends State<AthleteDashboard>
       }
 
       // Fetch profile image URL from Firebase
-      final imageUrl = await SupabaseService.fetchProfileImage(user.uid);
+      final imageUrl = await _fetchProfileImage(user.uid);
       if (imageUrl != null) {
         setState(() {
           profileImageUrl = imageUrl;
@@ -82,43 +102,129 @@ class _AthleteDashboardState extends State<AthleteDashboard>
     }
   }
 
-  Future<void> _pickImage() async {
-    setState(() => isLoading = true);
+  Future<String> _fetchProfileImage(String userId) async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('No user logged in');
+      final doc = await FirebaseFirestore.instance
+          .collection('athletes')
+          .doc(userId)
+          .get();
+
+      if (doc.exists && doc.data()?['profileImageUrl'] != null) {
+        return doc.data()!['profileImageUrl'];
       }
+      return 'assets/default_profile.png';
+    } catch (e) {
+      print('Error fetching profile image: $e');
+      return 'assets/default_profile.png';
+    }
+  }
 
-      // Use the new pickAndUploadImage method
-      final imageUrl = await SupabaseService.pickAndUploadImage(
-        athleteId: user.uid,
-        context: context,
-        source: ImageSource.gallery,
-      );
+  Future<String> _pickAndUploadImage() async {
+    try {
+      if (kIsWeb) {
+        final ImagePicker picker = ImagePicker();
+        final XFile? image =
+            await picker.pickImage(source: ImageSource.gallery);
 
-      if (imageUrl != null) {
-        setState(() {
-          profileImageUrl = imageUrl;
-        });
+        if (image == null) return '';
+
+        // Read the file as bytes for web
+        final bytes = await image.readAsBytes();
+        final imageUrl = await _cloudinaryService.uploadImage(bytes);
+
+        // Update Firestore with the new image URL
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('athletes')
+              .doc(user.uid)
+              .update({'profileImageUrl': imageUrl});
+        }
+
+        return imageUrl;
+      } else {
+        final ImagePicker picker = ImagePicker();
+        final XFile? image =
+            await picker.pickImage(source: ImageSource.gallery);
+
+        if (image == null) return '';
+
+        // Upload to Cloudinary
+        final imageUrl = await _cloudinaryService.uploadImage(File(image.path));
+
+        // Update Firestore with the new image URL
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('athletes')
+              .doc(user.uid)
+              .update({'profileImageUrl': imageUrl});
+        }
+
+        return imageUrl;
       }
     } catch (e) {
-      print('Error updating profile picture: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() => isLoading = false);
+      debugPrint('Error picking/uploading image: $e');
+      rethrow;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_cloudinaryError != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Dashboard'),
+          backgroundColor: Colors.black,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Configuration Error',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.red,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _cloudinaryError!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    _initializeCloudinary();
+                  },
+                  child: const Text('Retry'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    }
+                  },
+                  child: const Text('Sign Out'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -136,7 +242,7 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                     children: [
                       // Profile Picture
                       GestureDetector(
-                        onTap: _pickImage,
+                        onTap: _pickAndUploadImage,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
@@ -179,15 +285,15 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                                 Icons.camera_alt,
                                 color: Colors.orange,
                                 size: 40,
-          ),
-        ],
-      ),
+                              ),
+                          ],
+                        ),
                       ),
 
                       // Athlete Name
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
-              child: Text(
+                        child: Text(
                           athleteName,
                           style: const TextStyle(
                             color: Colors.white,
@@ -201,7 +307,7 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                       // Bio Section
                       Padding(
                         padding: const EdgeInsets.all(16),
-              child: Text(
+                        child: Text(
                           bio,
                           style: const TextStyle(
                             color: Colors.white70,
@@ -231,15 +337,15 @@ class _AthleteDashboardState extends State<AthleteDashboard>
                             color: Colors.grey[900],
                             borderRadius: BorderRadius.circular(12),
                           ),
-            child: Column(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+                            children: [
                               const Text(
                                 'Additional Details',
                                 style: TextStyle(
-                    color: Colors.orange,
+                                  color: Colors.orange,
                                   fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -342,9 +448,9 @@ class _AthleteDashboardState extends State<AthleteDashboard>
               context,
               MaterialPageRoute(
                 builder: (context) => const ToolsPage(),
-            ),
-          );
-        },
+              ),
+            );
+          },
           backgroundColor: Colors.orange,
           child: const Icon(Icons.build, color: Colors.white),
         ),
