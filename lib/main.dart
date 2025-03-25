@@ -4,6 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:universal_io/io.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,50 +18,36 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize Firebase Core
-    if (kIsWeb) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+    // Initialize Firebase
+    print('Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase initialized successfully');
 
-      // Initialize Firestore settings for web
-      await FirebaseFirestore.instance.enablePersistence();
-      FirebaseFirestore.instance.settings = const Settings(
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-        persistenceEnabled: true,
-      );
-    } else {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
+    // Initialize Firestore settings for web
+    if (kIsWeb) {
+      print('Configuring Firestore for web...');
+      try {
+        await FirebaseFirestore.instance.enablePersistence();
+        FirebaseFirestore.instance.settings = const Settings(
+          cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+          persistenceEnabled: true,
+        );
+        print('Firestore web configuration completed');
+      } catch (e) {
+        print('Error configuring Firestore persistence: $e');
+      }
     }
 
     // Log Firebase initialization status
-    print('Firebase initialized successfully');
     print('Firebase app name: ${Firebase.app().name}');
-    print('Firebase options loaded: ${Firebase.app().options != null}');
     print('Running on web platform: $kIsWeb');
-    print('Firebase Auth initialized: ${FirebaseAuth.instance != null}');
-
-    // Check Firebase initialization
-    print('Checking Firebase initialization...');
-    final app = Firebase.app();
-    print('Firebase.app(): ${app.name}');
-    print('Current user: ${FirebaseAuth.instance.currentUser?.email}');
-
-    // Test Firebase Auth
-    try {
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: 'test@gmail.com',
-            password: 'password123',
-          );
-      print('User created successfully: ${userCredential.user?.email}');
-    } catch (e) {
-      print('Firebase Auth Error: $e - Error');
-      print('Error details: ${e.toString()}');
-    }
-  } catch (e) {
+    print('Firebase Auth instance: ${FirebaseAuth.instance != null}');
+    print('Firebase Firestore instance: ${FirebaseFirestore.instance != null}');
+  } catch (e, stackTrace) {
     print('Error initializing Firebase: $e');
-    print('Error details: ${e.toString()}');
+    print('Stack trace: $stackTrace');
   }
 
   runApp(const MyApp());
