@@ -18,7 +18,7 @@ ATHLEAD revolutionizes athlete development by creating a comprehensive AI-powere
 
 ## ✨ Key Features & Innovations
 
-### AI-Powered Injury Recovery & Risk Detection 🏥
+### AI-Powered Injury Recovery 🏥
 - ML Model (Vertex AI) predicts recovery timelines based on injury specifics
 - Personalized recovery plans with dynamic progress tracking
 - Preventative risk detection to avoid common injuries
