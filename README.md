@@ -1,44 +1,36 @@
-Centralized Athlete Management Platform (CAMP)
-CAMP is an all-in-one solution designed to bring together athletes, coaches, physiotherapists, sports psychologists, and sports organizations on a single, integrated platform. Developed with Flutter for a sleek mobile experience and connected to a robust Firebase backend, CAMP empowers users with real-time performance tracking, personalized insights, and comprehensive management tools.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-Features
-Performance Tracking & Analytics:
-Integrates wearable devices (e.g., FITBIT) to monitor real-time metrics such as heart rate, speed, and endurance. AI-driven analytics provide detailed insights into performance trends and predict peak performance periods.
+## Getting Started
 
-Injury Prevention & Management:
-Leverages AI models to assess injury risks, manages digital medical records, and offers personalized rehabilitation plans developed in consultation with physiotherapists and sports psychologists.
+First, run the development server:
 
-Career Planning & Development:
-Allows athletes and coaches to set and track short-term and long-term goals, automatically logs match history and stats, and connects users to scholarship, sponsorship, and mentorship opportunities.
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-Financial Planning Tools:
-Features earnings tracking, expense management, and integrated guidance on tax and investments tailored to athletes’ unique financial needs.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-AI Chatbot / Virtual Assistant:
-Provides 24/7 support with schedule updates, injury FAQs, performance tips, and personalized nutrition advice in multiple languages.
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-User Segmentation & Offline Access:
-Delivers tailored experiences for athletes, coaches, medical professionals, and administrators. Includes an offline mode with auto-sync functionality to support users in remote or low-connectivity areas.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-Nutrition & Community Engagement:
-Offers personalized nutrition recommendations based on user details and exercise routines, and fosters regional communities with success stories and localized content.
+## Learn More
 
-Tech Stack
-Flutter: For building a cross-platform mobile application with a smooth, responsive UI.
-Firebase: Serves as the backend for authentication, real-time database management, cloud functions, and more.
-AI & Machine Learning: Powers performance analytics, injury risk assessment, and personalized recommendations.
-Value Proposition
-For Athletes: A holistic tool for managing performance, health, finances, and career growth.
-For Coaches: A data-driven platform that simplifies team management and enhances training effectiveness.
-For Organizations: Streamlined talent identification, progress tracking, and resource planning.
-For the Broader Community: An innovative approach to boost athlete performance and support, contributing to better health outcomes and competitive success.
-Getting Started
-Refer to the project documentation for detailed instructions on setting up the local development environment, integrating Firebase services, and running the Flutter application.
+To learn more about Next.js, take a look at the following resources:
 
-Contributing
-We welcome contributions! Please check out our contribution guidelines for more details on how to get involved.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-License
-This project is licensed under the [Your License Here] license.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-Explore, contribute, and help us revolutionize athlete management!
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
