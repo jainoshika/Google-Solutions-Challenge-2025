@@ -28,30 +28,32 @@ ATHLEAD revolutionizes athlete development by creating a comprehensive AI-powere
 - Personalized nutrition & training recommendations based on performance data
 - 24/7 health & career guidance integrated with professional consultation
 
-### Performance Analytics Dashboard 📊
-- Interactive visualizations tracking strength, endurance, and speed metrics
-- Competition performance trends over time
-- AI-driven insights highlighting strengths & improvement areas
-
-### Comprehensive Career Management 🎯
-- Event calendar for important dates (camps, trials, competitions)
-- Milestone tracking for career progression
-- Financial management tools for earnings and expenses
-
-### Financial Aid & Opportunity Portal 💼
+### Opportunity Portal & Financial Aid 💼
 - Real-time updates on sports-related government schemes and scholarships
 - Job opportunity tracking and application management
 - Personalized recommendations based on athlete profile and eligibility
-
-### Expert Consultation Network 👨‍⚕️👨‍🏫
-- Connect with doctors, coaches, and financial advisors
-- Virtual consultation booking system
-- Knowledge sharing between experienced and emerging athletes
 
 ### Social Achievement Community 🏆
 - Recognition platform to highlight accomplishments
 - Connection with scouts, sponsors, and mentors
 - Community support system for motivation and guidance
+
+### Performance Analytics Dashboard (Future Development)📊
+- Interactive visualizations tracking strength, endurance, and speed metrics
+- Competition performance trends over time
+- AI-driven insights highlighting strengths & improvement areas
+
+### Comprehensive Career Management (Future Development)🎯
+- Event calendar for important dates (camps, trials, competitions)
+- Milestone tracking for career progression
+- Financial management tools for earnings and expenses
+
+### Expert Consultation Network (Future Development) 👨‍⚕️👨‍🏫
+- Connect with doctors, coaches, and financial advisors
+- Virtual consultation booking system
+- Knowledge sharing between experienced and emerging athletes
+
+
 
 ## 🌍 Alignment with UN Sustainable Development Goals
 
@@ -65,7 +67,7 @@ ATHLEAD revolutionizes athlete development by creating a comprehensive AI-powere
 ### AI & Machine Learning Integration
 - **Vertex AI** powers personalized injury recovery predictions
 - **Gemini Pro** enables intelligent conversation and guidance
-- **ML Models** for nutrition, performance analytics, and risk assessment
+- **ML Models** for risk assessment
 
 ### Comprehensive Platform Architecture
 - Seamless user experience across devices with **Next.js** and **Tailwind CSS**
@@ -73,7 +75,7 @@ ATHLEAD revolutionizes athlete development by creating a comprehensive AI-powere
 - **Google Cloud** infrastructure enabling scalability and reliability
 
 ### Inclusivity By Design
-- Multilingual support through AI translation
+
 - Dark/Light mode for accessibility
 - Simplified interfaces for various technical proficiency levels
 
@@ -86,7 +88,7 @@ ATHLEAD revolutionizes athlete development by creating a comprehensive AI-powere
 
 ## 📈 Impact & Future Vision
 
-ATHLEAD is not just an app—it's a mission to transform sports development by:
+ATHLEAD is not just a platform —it's a mission to transform sports development by:
 
 - Increasing participation from underrepresented communities by 30%
 - Reducing career-ending injuries through early detection and proper recovery
@@ -94,6 +96,7 @@ ATHLEAD is not just an app—it's a mission to transform sports development by:
 - Creating a talent pipeline that identifies promising athletes regardless of background
 
 ### Future Roadmap:
+- Multilingual support through AI translation
 - Wearable integration for real-time health monitoring
 - Expanded expert network across multiple sports disciplines
 - Advanced predictive analytics for performance optimization
@@ -103,6 +106,5 @@ ATHLEAD is not just an app—it's a mission to transform sports development by:
 
 - 🧪 **Test the MVP:** [athlead-app.vercel.app](https://athlead-app.vercel.app)  
 - 💻 **Explore the Code:** [GitHub Repository](https://github.com/jainoshika/Google-Solutions-Challenge-2025/tree/main)
-- 🤝 **Team Drishtikon:** Led by Oshika Jain
 
 > ATHLEAD—where talent meets opportunity, and every athlete has a fair shot at greatness.
